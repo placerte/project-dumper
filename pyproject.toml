@@ -1,7 +1,14 @@
 [project]
 name = "project-dumper"
 version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
-requires-python = ">=3.13"
+description = "Dump a project into a single LLM-friendly text file"
+requires-python = ">=3.11"
 dependencies = []
+
+[project.scripts]
+project-dumper = "project_dumper.cli:main"
+produm = "project_dumper.cli:main"
+
+[tool.uv]
+package = true
+

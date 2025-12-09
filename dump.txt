@@ -1,6 +1,6 @@
 # PROJECT DUMP FOR LLM / CODE REVIEW
 
-Generated at: 2025-12-09T22:31:02Z
+Generated at: 2025-12-09T22:56:36Z
 Project root: /home/placerte/projects/project-dumper
 
 Document structure:
@@ -31,9 +31,23 @@ project-dumper
 ├── .git
 ├── .venv
 ├── __pycache__
+├── src
+│   ├── project_dumper
+│   │   ├── __pycache__
+│   │   ├── __init__.py
+│   │   ├── cli.py
+│   │   ├── constants.py
+│   │   ├── files.py
+│   │   ├── header.py
+│   │   └── tree.py
+│   └── project_dumper.egg-info
+│       ├── dependency_links.txt
+│       ├── entry_points.txt
+│       ├── PKG-INFO
+│       ├── SOURCES.txt
+│       └── top_level.txt
 ├── .gitignore
 ├── .python-version
-├── main.py
 ├── pyproject.toml
 ├── README.md
 └── uv.lock
@@ -46,8 +60,18 @@ FILES INCLUDED
 .gitignore
 .python-version
 README.md
-main.py
 pyproject.toml
+src/project_dumper.egg-info/PKG-INFO
+src/project_dumper.egg-info/SOURCES.txt
+src/project_dumper.egg-info/dependency_links.txt
+src/project_dumper.egg-info/entry_points.txt
+src/project_dumper.egg-info/top_level.txt
+src/project_dumper/__init__.py
+src/project_dumper/cli.py
+src/project_dumper/constants.py
+src/project_dumper/files.py
+src/project_dumper/header.py
+src/project_dumper/tree.py
 uv.lock
 
 ================================================================================
@@ -274,77 +298,93 @@ __marimo__/
 A python project flattener that exports small projects to a single txt file.
 
 
-==== FILE: main.py ====
+==== FILE: pyproject.toml ====
 
-#!/usr/bin/env python3
-"""
-project_dump.py
+[project]
+name = "project-dumper"
+version = "0.1.0"
+description = "Dump a project into a single LLM-friendly text file"
+requires-python = ">=3.11"
+dependencies = []
 
-Dump a code project into a single text file, with:
+[project.scripts]
+project-dumper = "project_dumper.cli:main"
+produm = "project_dumper.cli:main"
 
-1) A human/LLM-readable header explaining the structure.
-2) A directory tree of the project.
-3) The contents of all selected files, each with a clear header.
+[tool.uv]
+package = true
 
-Designed to be easy to later package as a PyPI CLI.
-"""
+
+
+==== FILE: src/project_dumper.egg-info/PKG-INFO ====
+
+Metadata-Version: 2.4
+Name: project-dumper
+Version: 0.1.0
+Summary: Dump a project into a single LLM-friendly text file
+Requires-Python: >=3.11
+
+
+==== FILE: src/project_dumper.egg-info/SOURCES.txt ====
+
+README.md
+pyproject.toml
+src/project_dumper/__init__.py
+src/project_dumper/cli.py
+src/project_dumper/constants.py
+src/project_dumper/files.py
+src/project_dumper/header.py
+src/project_dumper/tree.py
+src/project_dumper.egg-info/PKG-INFO
+src/project_dumper.egg-info/SOURCES.txt
+src/project_dumper.egg-info/dependency_links.txt
+src/project_dumper.egg-info/entry_points.txt
+src/project_dumper.egg-info/top_level.txt
+
+==== FILE: src/project_dumper.egg-info/dependency_links.txt ====
+
+
+
+
+==== FILE: src/project_dumper.egg-info/entry_points.txt ====
+
+[console_scripts]
+produm = project_dumper.cli:main
+project-dumper = project_dumper.cli:main
+
+
+==== FILE: src/project_dumper.egg-info/top_level.txt ====
+
+project_dumper
+
+
+==== FILE: src/project_dumper/__init__.py ====
+
+from __future__ import annotations
+
+__all__ = ["__version__"]
+
+__version__ = "0.1.0"
+
+
+
+==== FILE: src/project_dumper/cli.py ====
 
 from __future__ import annotations
 
 import argparse
-import datetime as dt
-import os
 from pathlib import Path
-from typing import Iterable, List, Set
+from typing import List, Set
 
-DEFAULT_EXCLUDE_DIRS: Set[str] = {
-    ".git",
-    ".hg",
-    ".svn",
-    ".idea",
-    ".vscode",
-    "__pycache__",
-    ".mypy_cache",
-    ".pytest_cache",
-    "node_modules",
-    "dist",
-    "build",
-    ".venv",
-    "venv",
-}
+from project_dumper.constants import (
+    DEFAULT_EXCLUDE_DIRS,
+    DEFAULT_EXCLUDE_EXTS,
+    DEFAULT_MAX_BYTES,
+)
+from project_dumper.files import iter_files, read_text_file, add_line_numbers
+from project_dumper.header import format_header
+from project_dumper.tree import build_dir_tree
 
-DEFAULT_EXCLUDE_EXTS: Set[str] = {
-    ".pyc",
-    ".pyo",
-    ".so",
-    ".dll",
-    ".dylib",
-    ".exe",
-    ".bin",
-    ".obj",
-    ".o",
-    ".pdf",
-    ".png",
-    ".jpg",
-    ".jpeg",
-    ".gif",
-    ".webp",
-    ".ico",
-    ".ttf",
-    ".otf",
-    ".woff",
-    ".woff2",
-    ".zip",
-    ".tar",
-    ".gz",
-    ".xz",
-    ".7z",
-    ".mp3",
-    ".mp4",
-    ".mov",
-    ".avi",
-    ".mkv",
-}
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -389,8 +429,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--max-bytes",
         type=int,
-        default=2_000_000,
-        help="Skip files larger than this size in bytes (default: 2,000,000).",
+        default=DEFAULT_MAX_BYTES,
+        help=f"Skip files larger than this size in bytes (default: {DEFAULT_MAX_BYTES:,}).",
     )
     parser.add_argument(
         "--no-tree",
@@ -405,150 +445,6 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def is_probably_binary(path: Path, sample_size: int = 8000) -> bool:
-    """
-    Heuristic: if the sampled bytes contain NUL, treat as binary.
-    """
-    try:
-        with path.open("rb") as f:
-            chunk = f.read(sample_size)
-        if b"\x00" in chunk:
-            return True
-        return False
-    except OSError:
-        # If we can't read it, treat it as binary/unwanted
-        return True
-
-
-def build_dir_tree(root: Path, exclude_dirs: Set[str]) -> str:
-    """
-    Build a simple ASCII tree of directories and files.
-    """
-    lines: List[str] = []
-
-    root = root.resolve()
-    root_name = root.name or str(root)
-
-    lines.append(root_name)
-
-    def walk(dir_path: Path, prefix: str = "") -> None:
-        entries = sorted(
-            [p for p in dir_path.iterdir()],
-            key=lambda p: (p.is_file(), p.name.lower()),
-        )
-        total = len(entries)
-        for idx, entry in enumerate(entries):
-            is_last = idx == total - 1
-            connector = "└── " if is_last else "├── "
-            line = f"{prefix}{connector}{entry.name}"
-            lines.append(line)
-            if entry.is_dir() and entry.name not in exclude_dirs:
-                new_prefix = prefix + ("    " if is_last else "│   ")
-                walk(entry, new_prefix)
-
-    walk(root)
-    return "\n".join(lines)
-
-
-def iter_files(
-    root: Path,
-    exclude_dirs: Set[str],
-    exclude_exts: Set[str],
-    include_exts: Set[str] | None,
-    max_bytes: int,
-) -> Iterable[Path]:
-    """
-    Walk the project tree and yield files that match filtering rules.
-    """
-    root = root.resolve()
-    for dirpath, dirnames, filenames in os.walk(root):
-        # Filter directories in-place so os.walk doesn't descend into them
-        dirnames[:] = [d for d in dirnames if d not in exclude_dirs]
-
-        for name in filenames:
-            path = Path(dirpath) / name
-
-            ext = path.suffix.lower()
-
-            if include_exts is not None:
-                if ext not in include_exts:
-                    continue
-
-            if ext in exclude_exts:
-                continue
-
-            try:
-                size = path.stat().st_size
-            except OSError:
-                continue
-
-            if size > max_bytes:
-                continue
-
-            if is_probably_binary(path):
-                continue
-
-            yield path
-
-
-def format_header(
-    root: Path,
-    include_exts: Set[str] | None,
-    exclude_dirs: Set[str],
-    exclude_exts: Set[str],
-) -> str:
-    now = dt.datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
-    lines = [
-        "# PROJECT DUMP FOR LLM / CODE REVIEW",
-        "",
-        f"Generated at: {now}",
-        f"Project root: {root.resolve()}",
-        "",
-        "Document structure:",
-        "1. This header section (what you are reading now).",
-        "2. A directory tree of the project (if enabled).",
-        "3. The contents of each included file, in deterministic order.",
-        "",
-        "Conventions:",
-        "- Each file starts with a header line like:",
-        "    ==== FILE: relative/path/to/file.py ==== ",
-        "- File contents follow immediately after the header.",
-        "",
-        "LLM instructions (suggested):",
-        "- Treat this as a *read-only* snapshot of the project.",
-        "- When referencing code, mention the file path and line(s) if possible.",
-        "- If you propose changes, explain them in terms of specific files/sections.",
-        "",
-        "Filtering applied:",
-        f"- Excluded directory names: {sorted(exclude_dirs)}",
-        f"- Excluded file extensions: {sorted(exclude_exts)}",
-    ]
-    if include_exts is None:
-        lines.append("- Included extensions: ALL non-binary files (minus excluded ext).")
-    else:
-        lines.append(f"- Included extensions (whitelist): {sorted(include_exts)}")
-
-    lines.append("")
-    lines.append("=" * 80)
-    lines.append("")
-    return "\n".join(lines)
-
-
-def read_text_file(path: Path) -> str:
-    # Use utf-8 with fallback.
-    try:
-        return path.read_text(encoding="utf-8", errors="replace")
-    except OSError:
-        return f"<<ERROR: could not read file {path}>>"
-
-
-def add_line_numbers(text: str, start: int = 1) -> str:
-    lines = text.splitlines()
-    width = len(str(start + len(lines) - 1))
-    numbered = [f"{str(i).rjust(width)} | {line}" for i, line in enumerate(lines, start)]
-    return "\n".join(numbered)
-
-
 def main() -> None:
     args = parse_args()
 
@@ -558,9 +454,9 @@ def main() -> None:
     if not root.exists() or not root.is_dir():
         raise SystemExit(f"Root path does not exist or is not a directory: {root}")
 
-    exclude_dirs = set(DEFAULT_EXCLUDE_DIRS) | set(args.exclude_dir)
-    exclude_exts = set(DEFAULT_EXCLUDE_EXTS) | {e.lower() for e in args.exclude_ext}
-    include_exts = (
+    exclude_dirs: Set[str] = set(DEFAULT_EXCLUDE_DIRS) | set(args.exclude_dir)
+    exclude_exts: Set[str] = set(DEFAULT_EXCLUDE_EXTS) | {e.lower() for e in args.exclude_ext}
+    include_exts: Set[str] | None = (
         {e.lower() for e in args.include_ext} if args.include_ext is not None else None
     )
 
@@ -618,25 +514,261 @@ if __name__ == "__main__":
 
 
 
-==== FILE: pyproject.toml ====
+==== FILE: src/project_dumper/constants.py ====
 
-[project]
-name = "project-dumper"
-version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
-requires-python = ">=3.13"
-dependencies = []
+from __future__ import annotations
+
+from typing import Set
+
+# Directories we don't want to descend into by default.
+DEFAULT_EXCLUDE_DIRS: Set[str] = {
+    ".git",
+    ".hg",
+    ".svn",
+    ".idea",
+    ".vscode",
+    "__pycache__",
+    ".mypy_cache",
+    ".pytest_cache",
+    "node_modules",
+    "dist",
+    "build",
+    ".venv",
+    "venv",
+}
+
+# File extensions that are usually binary / not useful for LLM context.
+DEFAULT_EXCLUDE_EXTS: Set[str] = {
+    ".pyc",
+    ".pyo",
+    ".so",
+    ".dll",
+    ".dylib",
+    ".exe",
+    ".bin",
+    ".obj",
+    ".o",
+    ".pdf",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".webp",
+    ".ico",
+    ".ttf",
+    ".otf",
+    ".woff",
+    ".woff2",
+    ".zip",
+    ".tar",
+    ".gz",
+    ".xz",
+    ".7z",
+    ".mp3",
+    ".mp4",
+    ".mov",
+    ".avi",
+    ".mkv",
+}
+
+# Default maximum file size to include (in bytes).
+DEFAULT_MAX_BYTES: int = 2_000_000
+
+# Number of bytes sampled when detecting binary files.
+BINARY_DETECTION_SAMPLE_SIZE: int = 8_000
+
+
+
+==== FILE: src/project_dumper/files.py ====
+
+from __future__ import annotations
+
+import os
+from pathlib import Path
+from typing import Iterable, List, Set
+
+from .constants import BINARY_DETECTION_SAMPLE_SIZE
+
+
+def is_probably_binary(path: Path, sample_size: int = BINARY_DETECTION_SAMPLE_SIZE) -> bool:
+    """
+    Heuristic: if the sampled bytes contain NUL, treat as binary.
+    """
+    try:
+        with path.open("rb") as f:
+            chunk = f.read(sample_size)
+        if b"\x00" in chunk:
+            return True
+        return False
+    except OSError:
+        # If we can't read it, treat it as binary/unwanted
+        return True
+
+
+def iter_files(
+    root: Path,
+    exclude_dirs: Set[str],
+    exclude_exts: Set[str],
+    include_exts: Set[str] | None,
+    max_bytes: int,
+) -> Iterable[Path]:
+    """
+    Walk the project tree and yield files that match filtering rules.
+    """
+    root = root.resolve()
+    for dirpath, dirnames, filenames in os.walk(root):
+        # Filter directories in-place so os.walk doesn't descend into them
+        dirnames[:] = [d for d in dirnames if d not in exclude_dirs]
+
+        for name in filenames:
+            path = Path(dirpath) / name
+            ext = path.suffix.lower()
+
+            if include_exts is not None and ext not in include_exts:
+                continue
+
+            if ext in exclude_exts:
+                continue
+
+            try:
+                size = path.stat().st_size
+            except OSError:
+                continue
+
+            if size > max_bytes:
+                continue
+
+            if is_probably_binary(path):
+                continue
+
+            yield path
+
+
+def read_text_file(path: Path) -> str:
+    """Read a text file with utf-8 + replacement fallback."""
+    try:
+        return path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return f"<<ERROR: could not read file {path}>>"
+
+
+def add_line_numbers(text: str, start: int = 1) -> str:
+    """
+    Prefix each line with a line number.
+    """
+    lines = text.splitlines()
+    width = len(str(start + len(lines) - 1))
+    numbered: List[str] = [
+        f"{str(i).rjust(width)} | {line}" for i, line in enumerate(lines, start)
+    ]
+    return "\n".join(numbered)
+
+
+
+==== FILE: src/project_dumper/header.py ====
+
+from __future__ import annotations
+
+import datetime as dt
+from pathlib import Path
+from typing import Set
+
+
+def format_header(
+    root: Path,
+    include_exts: Set[str] | None,
+    exclude_dirs: Set[str],
+    exclude_exts: Set[str],
+) -> str:
+    """
+    Build the top-of-file header that explains structure + instructions for the LLM.
+    """
+    now = dt.datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+    lines = [
+        "# PROJECT DUMP FOR LLM / CODE REVIEW",
+        "",
+        f"Generated at: {now}",
+        f"Project root: {root.resolve()}",
+        "",
+        "Document structure:",
+        "1. This header section (what you are reading now).",
+        "2. A directory tree of the project (if enabled).",
+        "3. The contents of each included file, in deterministic order.",
+        "",
+        "Conventions:",
+        "- Each file starts with a header line like:",
+        "    ==== FILE: relative/path/to/file.py ==== ",
+        "- File contents follow immediately after the header.",
+        "",
+        "LLM instructions (suggested):",
+        "- Treat this as a *read-only* snapshot of the project.",
+        "- When referencing code, mention the file path and line(s) if possible.",
+        "- If you propose changes, explain them in terms of specific files/sections.",
+        "",
+        "Filtering applied:",
+        f"- Excluded directory names: {sorted(exclude_dirs)}",
+        f"- Excluded file extensions: {sorted(exclude_exts)}",
+    ]
+    if include_exts is None:
+        lines.append("- Included extensions: ALL non-binary files (minus excluded ext).")
+    else:
+        lines.append(f"- Included extensions (whitelist): {sorted(include_exts)}")
+
+    lines.append("")
+    lines.append("=" * 80)
+    lines.append("")
+    return "\n".join(lines)
+
+
+
+==== FILE: src/project_dumper/tree.py ====
+
+from __future__ import annotations
+
+from pathlib import Path
+from typing import List, Set
+
+
+def build_dir_tree(root: Path, exclude_dirs: Set[str]) -> str:
+    """
+    Build a simple ASCII tree of directories and files under `root`,
+    skipping any directory whose name is in `exclude_dirs`.
+    """
+    lines: List[str] = []
+
+    root = root.resolve()
+    root_name = root.name or str(root)
+
+    lines.append(root_name)
+
+    def walk(dir_path: Path, prefix: str = "") -> None:
+        entries = sorted(
+            [p for p in dir_path.iterdir()],
+            key=lambda p: (p.is_file(), p.name.lower()),
+        )
+        total = len(entries)
+        for idx, entry in enumerate(entries):
+            is_last = idx == total - 1
+            connector = "└── " if is_last else "├── "
+            line = f"{prefix}{connector}{entry.name}"
+            lines.append(line)
+            if entry.is_dir() and entry.name not in exclude_dirs:
+                new_prefix = prefix + ("    " if is_last else "│   ")
+                walk(entry, new_prefix)
+
+    walk(root)
+    return "\n".join(lines)
+
 
 
 ==== FILE: uv.lock ====
 
 version = 1
 revision = 3
-requires-python = ">=3.13"
+requires-python = ">=3.11"
 
 [[package]]
 name = "project-dumper"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 
