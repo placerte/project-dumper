@@ -9,7 +9,7 @@ dependencies = ["pathspec"]
 license = { file = "LICENSE" }
 
 [project.urls]
-Repository = "https://github.com/placerte/produm"
+Repository = "https://github.com/placerte/project-dumper"
 
 [project.scripts]
 produm = "project_dumper.cli:main"
