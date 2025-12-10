@@ -17,6 +17,45 @@
 
 ```bash
 uv add produm
-# or
+```
+or
+```bash
 pip install produm
+```
 
+## Usage
+
+### Basic
+
+```bash
+produm
+```
+or
+```bash
+produm .
+```
+will create the dump file from and in the current directory.
+
+### Advanced
+
+Specify output:
+
+```bash
+produm . -o dump.txt
+```
+
+
+Only include Python files:
+
+```bash
+produm . --include-ext .py
+```
+
+Skip the directory tree:
+
+```bash
+produm . --no-tree
+```
+
+## License
+See [LICENSE](LICENSE)
