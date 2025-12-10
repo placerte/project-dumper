@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.1.2 — 2025-12-10
+bugfix: public url to repo in pyproject...
+
+## v0.1.1 — 2025-12-10
+- Same code but release cleaned up
+- Better Readme
+- LICENSE
+- Changelog
+
 ## v0.1.0 — 2025-12-10
 - Initial public release of `produm`
 - Basic CLI (`produm`)
@@ -8,12 +17,3 @@
 - Optional include/exclude extension filters
 - Optional line numbers
 - Optional .gitignore support
-
-## v0.1.1 — 2025-12-10
-- Same code but release cleaned up
-- Better Readme
-- LICENSE
-- Changelog
-
-## v0.1.2 — 2025-12-10
-bugfix: public url to repo in pyproject...
