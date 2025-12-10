@@ -10,11 +10,13 @@ def format_header(
     include_exts: Set[str] | None,
     exclude_dirs: Set[str],
     exclude_exts: Set[str],
+    gitignore_used: bool,
 ) -> str:
     """
     Build the top-of-file header that explains structure + instructions for the LLM.
     """
-    now = dt.datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+    now = dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat()
+
     lines = [
         "# PROJECT DUMP FOR LLM / CODE REVIEW",
         "",
@@ -44,6 +46,12 @@ def format_header(
         lines.append("- Included extensions: ALL non-binary files (minus excluded ext).")
     else:
         lines.append(f"- Included extensions (whitelist): {sorted(include_exts)}")
+    
+    if gitignore_used:
+        lines.append("- .gitignore: applied")
+    else:
+        lines.append("- .gitignore: NOT applied")
+
 
     lines.append("")
     lines.append("=" * 80)

@@ -1,12 +1,14 @@
 [project]
-name = "project-dumper"
+name = "produm"
 version = "0.1.0"
-description = "Dump a project into a single LLM-friendly text file"
+description = "Flatten a project into a single LLM-friendly text dump"
+authors = [{ name = "Pierre Lacerte" }]
+readme = "README.md"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = ["pathspec"]
+license = { text = "MIT" }
 
 [project.scripts]
-project-dumper = "project_dumper.cli:main"
 produm = "project_dumper.cli:main"
 
 [tool.uv]

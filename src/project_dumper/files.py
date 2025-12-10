@@ -3,8 +3,9 @@ from __future__ import annotations
 import os
 from pathlib import Path
 from typing import Iterable, List, Set
+from project_dumper.gitignore import matches_gitignore
 
-from .constants import BINARY_DETECTION_SAMPLE_SIZE
+from project_dumper.constants import BINARY_DETECTION_SAMPLE_SIZE
 
 
 def is_probably_binary(path: Path, sample_size: int = BINARY_DETECTION_SAMPLE_SIZE) -> bool:
@@ -28,6 +29,7 @@ def iter_files(
     exclude_exts: Set[str],
     include_exts: Set[str] | None,
     max_bytes: int,
+    gitignore_spec = None,
 ) -> Iterable[Path]:
     """
     Walk the project tree and yield files that match filtering rules.
@@ -35,8 +37,11 @@ def iter_files(
     root = root.resolve()
     for dirpath, dirnames, filenames in os.walk(root):
         # Filter directories in-place so os.walk doesn't descend into them
-        dirnames[:] = [d for d in dirnames if d not in exclude_dirs]
-
+        dirnames[:] = [
+            d for d in dirnames
+            if not matches_gitignore(gitignore_spec, Path(dirpath) / d, root)
+            and d not in exclude_dirs
+        ]
         for name in filenames:
             path = Path(dirpath) / name
             ext = path.suffix.lower()
@@ -56,6 +61,12 @@ def iter_files(
                 continue
 
             if is_probably_binary(path):
+                continue
+
+            if matches_gitignore(gitignore_spec, path, root):
+                continue
+
+            if path.name == ".gitignore":
                 continue
 
             yield path
