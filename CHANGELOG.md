@@ -9,3 +9,9 @@
 - Optional line numbers
 - Optional .gitignore support
 
+## v0.1.1 — 2025-12-10
+- Same code but release cleaned up
+- Better Readme
+- LICENSE
+- Changelog
+

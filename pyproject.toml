@@ -8,6 +8,9 @@ requires-python = ">=3.11"
 dependencies = ["pathspec"]
 license = { file = "LICENSE" }
 
+[project.urls]
+Repository = "https://github.com/YOUR_USERNAME/produm"
+
 [project.scripts]
 produm = "project_dumper.cli:main"
 
