@@ -1,6 +1,6 @@
 [project]
 name = "produm"
-version = "0.1.1"
+version = "0.1.2"
 description = "Flatten a project into a single LLM-friendly text dump"
 authors = [{ name = "Pierre Lacerte" }]
 readme = "README.md"
@@ -9,7 +9,7 @@ dependencies = ["pathspec"]
 license = { file = "LICENSE" }
 
 [project.urls]
-Repository = "https://github.com/YOUR_USERNAME/produm"
+Repository = "https://github.com/placerte/produm"
 
 [project.scripts]
 produm = "project_dumper.cli:main"

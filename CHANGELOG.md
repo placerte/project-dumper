@@ -15,3 +15,5 @@
 - LICENSE
 - Changelog
 
+## v0.1.2 — 2025-12-10
+bugfix: public url to repo in pyproject...
