@@ -34,7 +34,7 @@ or
 ```bash
 produm .
 ```
-will create the dump file from and in the current directory.
+will create the dump file *from* and *in* the current directory.
 
 ### Advanced
 
