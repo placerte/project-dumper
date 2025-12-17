@@ -57,5 +57,10 @@ Skip the directory tree:
 produm . --no-tree
 ```
 
+### Feature Wish List
+
+- [ ] ```produm --clean .``` or ```produm --clean``` or ```produm -c```: cleans the current directory of all dump files (.txt with "-dump-" in filename) 
+- [ ] Advanced option flag (or default?) ```produm -w``` or ```produm -wc``` overwrite and clean. 
+
 ## License
 See [LICENSE](LICENSE)
