@@ -1,11 +1,14 @@
 [project]
 name = "produm"
-version = "0.1.2"
+version = "0.2.0"
 description = "Flatten a project into a single LLM-friendly text dump"
 authors = [{ name = "Pierre Lacerte" }]
 readme = "README.md"
-requires-python = ">=3.11"
-dependencies = ["pathspec"]
+requires-python = ">=3.13"
+dependencies = [
+    "pathspec",
+    "simdoc>=0.2.0",
+]
 license = { file = "LICENSE" }
 
 [project.urls]
@@ -16,4 +19,3 @@ produm = "project_dumper.cli:main"
 
 [tool.uv]
 package = true
-

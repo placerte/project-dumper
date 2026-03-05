@@ -2,24 +2,23 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import sys
 from pathlib import Path
-from typing import List, Set
+from typing import Iterable, Sequence, Set
 
+from project_dumper.cleaning import clean_dump_files
 from project_dumper.constants import (
     DEFAULT_EXCLUDE_DIRS,
     DEFAULT_EXCLUDE_EXTS,
     DEFAULT_MAX_BYTES,
 )
-from project_dumper.files import iter_files, read_text_file, add_line_numbers
-from project_dumper.header import format_header
-from project_dumper.tree import build_dir_tree
+from project_dumper.files import add_line_numbers, iter_files, read_text_file
 from project_dumper.gitignore import load_gitignore
+from project_dumper.renderer import build_document
+from project_dumper.tree import build_dir_tree
 
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Dump a project into a single, LLM-friendly text file."
-    )
+def add_dump_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "root",
         nargs="?",
@@ -30,7 +29,7 @@ def parse_args() -> argparse.Namespace:
         "-o",
         "--output",
         default=None,
-        help="Output text file. If omitted, a name based on project and timestamp is generated.",
+        help="Output file. If omitted, a name based on project and timestamp is generated.",
     )
     parser.add_argument(
         "--include-ext",
@@ -75,93 +74,211 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--no-gitignore",
         action="store_true",
-        help="Ignores .gitignore (default: uses .gitignore if present"
-
+        help="Ignore .gitignore (default: uses .gitignore if present).",
     )
-    return parser.parse_args()
+    parser.add_argument(
+        "--pdf",
+        action="store_true",
+        help="Export PDF only (requires pandoc and xelatex).",
+    )
 
 
-def main() -> None:
-    args = parse_args()
+def add_clean_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "root",
+        nargs="?",
+        default=".",
+        help="Root directory to clean (default: current directory).",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show files that would be deleted without removing them.",
+    )
 
-    root = Path(args.root).resolve()
 
+def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
+    examples = (
+        "Examples:\n"
+        "  produm .\n"
+        "  produm dump .\n"
+        "  produm dump . --pdf\n"
+        "  produm clean .\n"
+        "  produm clean . --dry-run\n"
+        "\n"
+        "Default behavior:\n"
+        "  produm <path> runs clean then dump."
+    )
+    base_parser = argparse.ArgumentParser(
+        description="Dump a project into a single, LLM-friendly document.",
+        epilog=examples,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    add_dump_arguments(base_parser)
+
+    subcommand_parser = argparse.ArgumentParser(
+        description="Dump or clean project artifacts.",
+        epilog=examples,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    subparsers = subcommand_parser.add_subparsers(dest="command")
+
+    dump_parser = subparsers.add_parser("dump", help="Generate a project dump.")
+    add_dump_arguments(dump_parser)
+
+    clean_parser = subparsers.add_parser("clean", help="Remove prior dump artifacts.")
+    add_clean_arguments(clean_parser)
+
+    candidate_argv = list(argv) if argv is not None else sys.argv[1:]
+    if candidate_argv and candidate_argv[0] in {"dump", "clean"}:
+        return subcommand_parser.parse_args(candidate_argv)
+
+    args = base_parser.parse_args(candidate_argv)
+    setattr(args, "command", None)
+    return args
+
+
+def build_output_path(root: Path, output: str | None, pdf: bool) -> Path:
+    if output is None:
+        project_name = root.name
+        timestamp = dt.datetime.now().strftime("%Y%m%d-%H%M")
+        suffix = ".pdf" if pdf else ".md"
+        return Path(f"{project_name}-dump-{timestamp}{suffix}")
+
+    output_path = Path(output)
+    if pdf and output_path.suffix.lower() != ".pdf":
+        return output_path.with_suffix(".pdf")
+    return output_path
+
+
+def gather_files(
+    root: Path,
+    exclude_dirs: Set[str],
+    exclude_exts: Set[str],
+    include_exts: Set[str] | None,
+    max_bytes: int,
+    use_gitignore: bool,
+) -> list[Path]:
     gitignore_spec = None
-    if not args.no_gitignore:
+    if use_gitignore:
         gitignore_spec = load_gitignore(root)
 
-    if not root.exists() or not root.is_dir():
-        raise SystemExit(f"Root path does not exist or is not a directory: {root}")
-
-    if args.output is None:
-        project_name = root.name
-        timsestamp = dt.datetime.now().strftime("%Y%m%d-%H%M")
-        output = Path(f"{project_name}-dump-{timsestamp}.txt")
-    else:
-        output = Path(args.output)
-
-    exclude_dirs: Set[str] = set(DEFAULT_EXCLUDE_DIRS) | set(args.exclude_dir)
-    exclude_exts: Set[str] = set(DEFAULT_EXCLUDE_EXTS) | {e.lower() for e in args.exclude_ext}
-    include_exts: Set[str] | None = (
-        {e.lower() for e in args.include_ext} if args.include_ext is not None else None
-    )
-
-    files = sorted(
+    return sorted(
         iter_files(
             root,
             exclude_dirs,
             exclude_exts,
             include_exts,
-            args.max_bytes,
+            max_bytes,
             gitignore_spec=gitignore_spec,
         ),
         key=lambda p: str(p.relative_to(root)),
     )
 
-    header = format_header(root, include_exts, exclude_dirs, exclude_exts, gitignore_used=False)
 
-    tree_str = ""
-    if not args.no_tree:
-        tree_str = "DIRECTORY TREE\n" + "-" * 80 + "\n"
-        tree_str += build_dir_tree(root, exclude_dirs)
-        tree_str += "\n\n" + "=" * 80 + "\n\n"
-
-    result_lines: List[str] = []
-    result_lines.append(header)
-    if tree_str:
-        result_lines.append(tree_str)
-
-    # Files section summary
-    result_lines.append("FILES INCLUDED")
-    result_lines.append("-" * 80)
-    for f in files:
-        rel = f.relative_to(root)
-        result_lines.append(str(rel))
-    result_lines.append("")
-    result_lines.append("=" * 80)
-    result_lines.append("")
-
-    # Now dump each file with its own header + contents
-    for f in files:
-        rel = f.relative_to(root)
-        result_lines.append(f"==== FILE: {rel} ====")
-        result_lines.append("")
-        content = read_text_file(f)
-        if args.with_line_numbers:
+def build_file_contents(
+    root: Path,
+    files: Iterable[Path],
+    with_line_numbers: bool,
+) -> list[tuple[Path, str]]:
+    contents: list[tuple[Path, str]] = []
+    for path in files:
+        rel = path.relative_to(root)
+        content = read_text_file(path)
+        if with_line_numbers:
             content = add_line_numbers(content)
-        result_lines.append(content)
-        result_lines.append("")  # blank line between files
+        contents.append((rel, content))
+    return contents
 
-    text = "\n".join(result_lines)
+
+def run_dump(args: argparse.Namespace) -> Path:
+    """Generate the project dump document and save it to disk."""
+    root = Path(args.root).resolve()
+    if not root.exists() or not root.is_dir():
+        raise SystemExit(f"Root path does not exist or is not a directory: {root}")
+
+    output = build_output_path(root, args.output, args.pdf)
+
+    exclude_dirs: Set[str] = set(DEFAULT_EXCLUDE_DIRS) | set(args.exclude_dir)
+    exclude_exts: Set[str] = set(DEFAULT_EXCLUDE_EXTS) | {
+        e.lower() for e in args.exclude_ext
+    }
+    include_exts: Set[str] | None = (
+        {e.lower() for e in args.include_ext} if args.include_ext is not None else None
+    )
+
+    files = gather_files(
+        root,
+        exclude_dirs,
+        exclude_exts,
+        include_exts,
+        args.max_bytes,
+        use_gitignore=not args.no_gitignore,
+    )
+    rel_files = [path.relative_to(root) for path in files]
+    file_contents = build_file_contents(root, files, args.with_line_numbers)
+
+    tree_text = build_dir_tree(root, exclude_dirs) if not args.no_tree else ""
+    doc = build_document(
+        root=root,
+        tree_text=tree_text,
+        files=rel_files,
+        file_contents=file_contents,
+        include_tree=not args.no_tree,
+    )
 
     try:
-        output.write_text(text, encoding="utf-8")
+        if args.pdf:
+            doc.save_pdf(output)
+        else:
+            doc.save(output)
     except OSError as e:
         raise SystemExit(f"Error writing output file {output}: {e}")
 
     print(f"Wrote dump for {len(files)} files to {output}")
+    return output
+
+
+def run_clean(args: argparse.Namespace) -> list[Path]:
+    """Remove dump artifacts in the target directory (or preview in dry-run)."""
+    root = Path(args.root).resolve()
+    if not root.exists() or not root.is_dir():
+        raise SystemExit(f"Root path does not exist or is not a directory: {root}")
+
+    try:
+        removed = list(clean_dump_files(root, args.dry_run))
+    except OSError as e:
+        raise SystemExit(f"Error removing dump files in {root}: {e}")
+    if args.dry_run:
+        prefix = "Would remove"
+    else:
+        prefix = "Removed"
+
+    for path in removed:
+        rel = path.relative_to(root)
+        print(f"{prefix}: {rel}")
+    return removed
+
+
+def main(argv: Sequence[str] | None = None) -> None:
+    """CLI entry point."""
+    args = parse_args(argv)
+
+    if args.command == "clean":
+        run_clean(args)
+        return
+    if args.command == "dump":
+        run_dump(args)
+        return
+
+    run_clean(
+        argparse.Namespace(
+            root=args.root,
+            dry_run=False,
+        )
+    )
+    run_dump(args)
 
 
 if __name__ == "__main__":
     main()
-

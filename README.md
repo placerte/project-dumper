@@ -1,9 +1,9 @@
 # produm
 
-`produm` is a tiny CLI tool that flattens any small project into a single, LLM-friendly text file. Useful when you want to show an entire codebase to ChatGPT or other LLMs without manually copying files. This was created for Python projects, but it could be generalized for other projects.
+`produm` is a tiny CLI tool that flattens any small project into a single, LLM-friendly document. Useful when you want to show an entire codebase to ChatGPT or other LLMs without manually copying files. This was created for Python projects, but it could be generalized for other projects.
 
 ## Features
-- Generates a single `.txt` dump with:
+- Generates a single `.md` dump with:
   - Directory tree
   - File list
   - All text-based file contents
@@ -12,6 +12,8 @@
 - Supports include/exclude rules
 - Optional line numbers for code review and debugging
 - Output name auto-generated unless specified
+- Optional PDF export via Pandoc
+- Clean command removes prior dump artifacts
 
 ## Installation
 
@@ -34,33 +36,56 @@ or
 ```bash
 produm .
 ```
-will create the dump file *from* and *in* the current directory.
+will clean old dumps, then create a new dump file *from* and *in* the current directory.
+
+### Subcommands
+
+Dump only:
+
+```bash
+produm dump .
+```
+
+Clean only:
+
+```bash
+produm clean .
+```
+
+Dry-run cleaning:
+
+```bash
+produm clean . --dry-run
+```
 
 ### Advanced
 
 Specify output:
 
 ```bash
-produm . -o dump.txt
+produm dump . -o dump.md
 ```
 
 
 Only include Python files:
 
 ```bash
-produm . --include-ext .py
+produm dump . --include-ext .py
 ```
 
 Skip the directory tree:
 
 ```bash
-produm . --no-tree
+produm dump . --no-tree
 ```
 
-### Feature Wish List
+Export PDF only:
 
-- [ ] ```produm --clean .``` or ```produm --clean``` or ```produm -c```: cleans the current directory of all dump files (.txt with "-dump-" in filename) 
-- [ ] Advanced option flag (or default?) ```produm -w``` or ```produm -wc``` overwrite and clean. 
+```bash
+produm dump . --pdf
+```
+
+PDF export requires `pandoc` and `xelatex`.
 
 ## License
 See [LICENSE](LICENSE)

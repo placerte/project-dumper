@@ -1,6 +1,6 @@
 version = 1
 revision = 3
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 
 [[package]]
 name = "pathspec"
@@ -12,12 +12,25 @@ wheels = [
 ]
 
 [[package]]
-name = "project-dumper"
-version = "0.1.0"
+name = "produm"
+version = "0.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "pathspec" },
+    { name = "simdoc" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "pathspec" }]
+requires-dist = [
+    { name = "pathspec" },
+    { name = "simdoc", specifier = ">=0.2.0" },
+]
+
+[[package]]
+name = "simdoc"
+version = "0.2.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/46/3b/f6353e40dde953ed262c246e6d34e115cc693442a244f3e8865c39521a7f/simdoc-0.2.0.tar.gz", hash = "sha256:c75d1fb6f7b83dc2ae790541d10b54bf07d2ea5c135735aa75f3c0a5d06563e9", size = 323192, upload-time = "2026-03-05T15:25:36.381Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9d/71/2e28845b6b3e40dbe4078df45c0602889560cb8112e2863f5363eb2e2580/simdoc-0.2.0-py3-none-any.whl", hash = "sha256:ce30e5fefe94b9a5dac296ac59280c5d30cbce59065298b76486ff2dc24b925e", size = 19704, upload-time = "2026-03-05T15:25:35.048Z" },
+]

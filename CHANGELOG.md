@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.2.0 — 2026-03-05
+- Refactor renderer to simdoc-based document generation
+- Add clean subcommand with strict dump file matching
+- Add PDF export via Pandoc (save_pdf)
+- Introduce CLI subcommands with default clean+dump workflow
+- Improve document structure, TOC, and file section headings
+
 ## v0.1.2 — 2025-12-10
 bugfix: public url to repo in pyproject...
 
