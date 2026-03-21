@@ -1,3 +1,14 @@
+---
+id: BLK-TOOLBOX-CODE-STYLE-V1
+name: Code Style
+type: toolbox
+scope: core
+version: 1.0
+status: deprecated
+revised: 2026-03-20
+summary: Conventions for readability, correctness, and agent reliability.
+---
+
 # code\_style.md
 
 > Living document: conventions for humans + agents contributing to this repo.

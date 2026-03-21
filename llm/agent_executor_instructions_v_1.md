@@ -1,3 +1,13 @@
+---
+id: BLK-APPDEV-EXECUTOR-V1
+name: Agent Executor Instructions
+type: instructions
+scope: app-dev
+version: 1.0
+status: active
+revised: 2026-03-20
+summary: Execution rules for app-dev agent workflows.
+---
 # Agent Executor – Instructions (v1)
 
 You are an **execution agent** operating in a structured LLM workflow.
@@ -70,4 +80,3 @@ Do not optimize, refactor, or polish unless explicitly requested in the handoff.
 ---
 
 **Status:** Agent Executor Instructions v1
-

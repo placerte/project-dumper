@@ -1,3 +1,13 @@
+---
+id: BLK-APPDEV-PYTHON-TOOLBOX-V1
+name: Python Toolbox / Toolchain
+type: toolbox
+scope: app-dev
+version: 1.0
+status: active
+revised: 2026-03-20
+summary: Default Python tooling stack and coding rules for app-dev workflows.
+---
 # Python Toolbox / Toolchain (Authoritative)
 
 This document defines the **default Python tooling stack** and **coding rules** to be assumed by agents and humans when working on Python projects under this knowledge base.
@@ -51,6 +61,25 @@ Build commands:
 Artifacts:
 - Source distribution (sdist)
 - Wheel
+
+### Distribution Targets
+
+Rules:
+- If the deliverable is a library or dev tool meant to be added to other projects, publish a PyPI package (sdist + wheel) using `uv build` / `uv publish`.
+- If the deliverable is a distributable app intended for system-wide use (installed binaries, OS-level paths), build a binary distribution with PyInstaller.
+- If intent is unclear, ask a single clarifying question before choosing a distribution path.
+
+### Release Workflow (GitHub)
+
+Rules:
+- Releasing is **only** performed on explicit user request; do not release automatically in routine sessions.
+- When releasing from a GitHub repository, use the `gh` CLI for releases and assets.
+- The release sequence is required:
+  1) build
+  2) verify artifacts exist and are correct
+  3) review `README.md` coverage and quality; released apps should include at minimum install and usage instructions
+  4) `git add`, commit, and push
+  5) create the release and upload assets via `gh`
 
 ---
 
@@ -161,4 +190,3 @@ project-root/
 ├── tests/
 │   └── test_*.py
 └── docs/ (optional)
-

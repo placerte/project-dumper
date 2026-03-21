@@ -1,3 +1,14 @@
+---
+id: BLK-OTHERS-USER-PERSONA-V1
+name: User Persona
+type: persona
+scope: mixed
+version: 1.0
+status: deprecated
+revised: 2026-03-20
+summary: User preferences, tone, and workflow constraints.
+---
+
 # persona.md
 
 ## TL;DR (Read this first)
@@ -41,4 +52,3 @@ Prefers clarity over elegance, explicit logic over abstractions, and fast iterat
 - “I don’t know” is acceptable if clearly stated
 - Start simple; expand only when justified
 - End with concise summaries or decisions when possible
-

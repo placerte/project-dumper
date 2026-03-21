@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 from typing import Iterable, Sequence, Set
 
+from project_dumper.clipboard import ClipboardResult, copy_file_to_clipboard
 from project_dumper.cleaning import clean_dump_files
 from project_dumper.constants import (
     DEFAULT_EXCLUDE_DIRS,
@@ -236,7 +237,18 @@ def run_dump(args: argparse.Namespace) -> Path:
         raise SystemExit(f"Error writing output file {output}: {e}")
 
     print(f"Wrote dump for {len(files)} files to {output}")
+    clipboard_result = copy_dump_to_clipboard(output)
+    if clipboard_result.success:
+        print("Clipboard: copied dump file.")
+    else:
+        reason = f": {clipboard_result.message}" if clipboard_result.message else ""
+        print(f"Warning: clipboard copy failed{reason}")
     return output
+
+
+def copy_dump_to_clipboard(output: Path) -> ClipboardResult:
+    """Copy the generated dump file to the clipboard."""
+    return copy_file_to_clipboard(output)
 
 
 def run_clean(args: argparse.Namespace) -> list[Path]:

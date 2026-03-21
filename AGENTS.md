@@ -1,5 +1,24 @@
 # AGENTS.md
 
+### LLM Context Blocks
+
+These files contain reusable instructions and workflows
+that may be relevant when working in this repository.
+
+<!-- agmod:start -->
+
+- llm/agent_executor_instructions_v_1.md
+- llm/code_style.md
+- llm/progress_tracker.md
+- llm/python_toolbox.md
+- llm/sessions_logger.md
+- llm/textual_resources.md
+- llm/textual_toolbox.md
+- llm/user-persona.md
+
+<!-- agmod:end -->
+
+
 This file orients coding agents to the tooling, workflows, and style rules for
 this repository. It is derived from `docs/python_toolbox.md`,
 `docs/code_style.md`, `docs/user-persona.md`, and
