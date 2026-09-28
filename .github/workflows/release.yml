@@ -1,0 +1,37 @@
+name: Release Linux executable
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Install locked dependencies
+        run: uv sync --frozen --dev
+      - name: Run tests
+        run: uv run pytest
+      - name: Build standalone executable
+        run: uv run pyinstaller --onefile --name produm-linux-x86_64 src/project_dumper/cli.py
+      - name: Verify executable
+        run: |
+          actual_version="$(./dist/produm-linux-x86_64 --version)"
+          expected_version="produm-linux-x86_64 ${GITHUB_REF_NAME#v}"
+          test "${actual_version}" = "${expected_version}"
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create "${GITHUB_REF_NAME}"
+          --verify-tag
+          --generate-notes
+          --title "produm ${GITHUB_REF_NAME#v}"
+          dist/produm-linux-x86_64
+          install.sh

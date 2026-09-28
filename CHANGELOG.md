@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.3.0 — 2026-09-28
+- Add a standalone Linux x86_64 release binary
+- Add a one-line curl installer and `produm update` self-update command
+- Add `produm --version`
+- Automate tagged GitHub releases with tested binary assets
+
 ## v0.2.0 — 2026-03-05
 - Refactor renderer to simdoc-based document generation
 - Add clean subcommand with strict dump file matching

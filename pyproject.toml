@@ -1,6 +1,6 @@
 [project]
 name = "produm"
-version = "0.2.0"
+version = "0.3.0"
 description = "Flatten a project into a single LLM-friendly text dump"
 authors = [{ name = "Pierre Lacerte" }]
 readme = "README.md"
@@ -20,3 +20,8 @@ produm = "project_dumper.cli:main"
 
 [tool.uv]
 package = true
+
+[dependency-groups]
+dev = [
+    "pyinstaller>=6.16.0",
+]

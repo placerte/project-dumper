@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 from typing import Iterable, Sequence, Set
 
+from project_dumper import __version__
 from project_dumper.clipboard import ClipboardResult, copy_file_to_clipboard
 from project_dumper.cleaning import clean_dump_files
 from project_dumper.constants import (
@@ -17,6 +18,7 @@ from project_dumper.files import add_line_numbers, iter_files, read_text_file
 from project_dumper.gitignore import load_gitignore
 from project_dumper.renderer import build_document
 from project_dumper.tree import build_dir_tree
+from project_dumper.updater import UpdateError, update_executable
 
 
 def add_dump_arguments(parser: argparse.ArgumentParser) -> None:
@@ -115,6 +117,11 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         epilog=examples,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
+    base_parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
+    )
     add_dump_arguments(base_parser)
 
     subcommand_parser = argparse.ArgumentParser(
@@ -130,8 +137,10 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     clean_parser = subparsers.add_parser("clean", help="Remove prior dump artifacts.")
     add_clean_arguments(clean_parser)
 
+    subparsers.add_parser("update", help="Update the standalone Linux executable.")
+
     candidate_argv = list(argv) if argv is not None else sys.argv[1:]
-    if candidate_argv and candidate_argv[0] in {"dump", "clean"}:
+    if candidate_argv and candidate_argv[0] in {"dump", "clean", "update"}:
         return subcommand_parser.parse_args(candidate_argv)
 
     args = base_parser.parse_args(candidate_argv)
@@ -281,6 +290,13 @@ def main(argv: Sequence[str] | None = None) -> None:
         return
     if args.command == "dump":
         run_dump(args)
+        return
+    if args.command == "update":
+        try:
+            message = update_executable(__version__)
+        except UpdateError as exc:
+            raise SystemExit(f"Update failed: {exc}") from exc
+        print(message)
         return
 
     run_clean(

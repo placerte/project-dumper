@@ -17,6 +17,23 @@
 
 ## Installation
 
+### Linux standalone app
+
+Install the latest Linux x86_64 release without Python or a package manager:
+
+```bash
+curl -fsSL https://github.com/placerte/project-dumper/releases/latest/download/install.sh | sh
+```
+
+The installer writes `produm` to `~/.local/bin` by default. Set `INSTALL_DIR`
+to choose another location. Update an installed standalone binary with:
+
+```bash
+produm update
+```
+
+### Python package
+
 ```bash
 uv add produm
 ```
